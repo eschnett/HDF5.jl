@@ -23,6 +23,7 @@ write(f, "Auint8", convert(Matrix{UInt8}, Ai))
 write(f, "Auint16", convert(Matrix{UInt16}, Ai))
 write(f, "Auint32", convert(Matrix{UInt32}, Ai))
 write(f, "Auint64", convert(Matrix{UInt64}, Ai))
+write(f, "SubAuint64", sub(convert(Matrix{UInt64}, Ai), 1:2, 1:3))
 # Test strings
 salut = "Hi there"
 ucode = "uniçº∂e"
@@ -139,6 +140,9 @@ Ai32 = read(fr, "Auint32")
 Ai64 = read(fr, "Auint64")
 @assert Ai == Ai64
 @assert eltype(Ai64) == UInt64
+SubAi64 = read(fr, "SubAuint64")
+@assert sub(Ai,1:2,1:3) == SubAi64
+@assert eltype(SubAi64) == UInt64
 salutr = read(fr, "salut")
 @assert salut == salutr
 salutr = read(fr, "salut-vlen")

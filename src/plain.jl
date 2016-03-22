@@ -1050,9 +1050,9 @@ datatype(dset::HDF5Dataset) = HDF5Datatype(h5d_get_type(checkvalid(dset).id), fi
 datatype(dset::HDF5Attribute) = HDF5Datatype(h5a_get_type(checkvalid(dset).id), file(dset))
 
 # Create a datatype from in-memory types
-datatype{T<:HDF5BitsKind}(x::T) = HDF5Datatype(hdf5_type_id(T), false)
+datatype{T<:HDF5BitsKind}(::T) = HDF5Datatype(hdf5_type_id(T), false)
 datatype{T<:HDF5BitsKind}(::Type{T}) = HDF5Datatype(hdf5_type_id(T), false)
-datatype{T<:HDF5BitsKind}(A::Array{T}) = HDF5Datatype(hdf5_type_id(T), false)
+datatype{T<:HDF5BitsKind}(::AbstractArray{T}) = HDF5Datatype(hdf5_type_id(T), false)
 function datatype{S<:ByteString}(str::S)
     type_id = h5t_copy(hdf5_type_id(S))
     h5t_set_size(type_id, max(length(str.data), 1))
@@ -1107,7 +1107,7 @@ dataspace{T<:HDF5BitsKind}(x::T) = HDF5Dataspace(h5s_create(H5S_SCALAR))
     end
     HDF5Dataspace(space_id)
 end
-@compat dataspace(A::Array; max_dims::Union{Dims, Tuple{}} = ()) = _dataspace(size(A), max_dims)
+@compat dataspace(A::AbstractArray; max_dims::Union{Dims, Tuple{}} = ()) = _dataspace(size(A), max_dims)
 dataspace(str::ByteString) = HDF5Dataspace(h5s_create(H5S_SCALAR))
 @compat dataspace(R::Array{HDF5ReferenceObj}; max_dims::Union{Dims, Tuple{}}=()) = _dataspace(size(R), max_dims)
 @compat dataspace(v::HDF5Vlen; max_dims::Union{Dims, Tuple{}}=()) = _dataspace(size(v.data), max_dims)
@@ -1499,7 +1499,7 @@ end
             obj, dtype
         end
         # Scalar types
-        ($fsym){T<:BitsKindOrByteString}(parent::$ptype, name::ByteString, data::Union{T, Array{T}}, plists...) =
+        ($fsym){T<:BitsKindOrByteString}(parent::$ptype, name::ByteString, data::Union{T, AbstractArray{T}}, plists...) =
             ($privatesym)(parent, name, data, plists...)
         # VLEN types
         ($fsym){T<:Union{HDF5BitsKind,CharType}}(parent::$ptype, name::ByteString, data::HDF5Vlen{T}, plists...) =
@@ -1534,7 +1534,7 @@ end
             end
         end
         # Scalar types
-        ($fsym){T<:BitsKindOrByteString}(parent::$ptype, name::ByteString, data::Union{T, Array{T}}, plists...) =
+        ($fsym){T<:BitsKindOrByteString}(parent::$ptype, name::ByteString, data::Union{T, AbstractArray{T}}, plists...) =
             ($privatesym)(parent, name, data, plists...)
         # VLEN types
         ($fsym){T<:Union{HDF5BitsKind,CharType}}(parent::$ptype, name::ByteString, data::HDF5Vlen{T}, plists...) =
@@ -1543,7 +1543,7 @@ end
 end
 # Write to already-created objects
 # Scalars
-@compat function write{T<:BitsKindOrByteString}(obj::DatasetOrAttribute, x::Union{T, Array{T}})
+@compat function write{T<:BitsKindOrByteString}(obj::DatasetOrAttribute, x::Union{T, AbstractArray{T}})
     dtype = datatype(x)
     try
         writearray(obj, dtype.id, x)
@@ -1561,10 +1561,10 @@ end
     end
 end
 # For plain files and groups, let "write(obj, name, val)" mean "d_write"
-@compat write{T<:BitsKindOrByteString}(parent::Union{HDF5File, HDF5Group}, name::ByteString, data::Union{T, Array{T}}, plists...) =
+@compat write{T<:BitsKindOrByteString}(parent::Union{HDF5File, HDF5Group}, name::ByteString, data::Union{T, AbstractArray{T}}, plists...) =
     d_write(parent, name, data, plists...)
 # For datasets, "write(dset, name, val)" means "a_write"
-@compat write{T<:BitsKindOrByteString}(parent::HDF5Dataset, name::ByteString, data::Union{T, Array{T}}, plists...) = a_write(parent, name, data, plists...)
+@compat write{T<:BitsKindOrByteString}(parent::HDF5Dataset, name::ByteString, data::Union{T, AbstractArray{T}}, plists...) = a_write(parent, name, data, plists...)
 
 # Reading arrays using getindex: data = dset[:,:,10]
 @compat function getindex(dset::HDF5Dataset, indices::Union{Range{Int},Int}...)
@@ -1600,7 +1600,7 @@ end
     T = hdf5_to_julia(dset)
     _setindex!(dset, T, X, indices...)
 end
-@compat function _setindex!(dset::HDF5Dataset,T::Type, X::Array, indices::Union{Range{Int},Int}...)
+@compat function _setindex!(dset::HDF5Dataset, T::Type, X::AbstractArray, indices::Union{Range{Int},Int}...)
     if !(T<:Array)
         error("Dataset indexing (hyperslab) is available only for arrays")
     end
